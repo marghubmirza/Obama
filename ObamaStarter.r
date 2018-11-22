@@ -82,7 +82,7 @@ accuracy(rt.pred, elect.df.validation$Obama_margin_percent)
 accuracy(rt.tuned.pred, elect.df.validation$Obama_margin_percent)
 
 
-# MIRZA 
+# MIRZA Alam Mirza
 
 cor(elect.df.smaller.train$Medicare,elect.df.smaller.train$Disabilities)
 #cor_matrix <- as.data.frame(cor(elect.df.smaller.train[,10:41])) # To find all pairwise correlations.
