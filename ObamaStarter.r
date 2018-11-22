@@ -44,7 +44,7 @@ names(elect.df.train)
 
 (nTrain <- nrow(elect.df.train))
 
-(nSmallTrain <- round(nrow(elect.df.train) * 0.90))
+(nSmallTrain <- round(nrow(elect.df.train) * 0.75))
 (nValid <- nTrain - nSmallTrain)
 
 set.seed(201)
@@ -54,8 +54,9 @@ rowIndicesSmallerTrain <- sample(1:nTrain, size = nSmallTrain, replace = FALSE)
 elect.df.smaller.train <- elect.df.train[rowIndicesSmallerTrain, ]
 elect.df.validation <- elect.df.train[-rowIndicesSmallerTrain, ]
 
-lm <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + SpeakingNonEnglish + LandArea, data = elect.df.smaller.train)
+lm <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities + AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian,  data = elect.df.smaller.train)
 summary(lm)
+
 
 lm.step <- step(lm, direction = "backward")
 summary(lm.step)  # Which variables did it drop?
@@ -66,10 +67,10 @@ lm.step.pred <- predict(lm.step, elect.df.validation)
 accuracy(lm.pred, elect.df.validation$Obama_margin_percent)
 accuracy(lm.step.pred, elect.df.validation$Obama_margin_percent)
 
-rt <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + SpeakingNonEnglish + LandArea, data = elect.df.smaller.train)  # Fits a regression tree.
+rt <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities +  AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian, data = elect.df.smaller.train)  # Fits a regression tree.
 prp(rt, type = 1, extra = 1)  # Use prp from the rpart.plot package to plot the tree.
 
-rt.tuned <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + SpeakingNonEnglish + LandArea, data = elect.df.smaller.train, control = rpart.control(cp = 0.0001))
+rt.tuned <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities +   AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian, data = elect.df.smaller.train, control = rpart.control(cp = 0.005))
 prp(rt.tuned, type = 1, extra = 1)
 
 rt.pred <- predict(rt, elect.df.validation)
@@ -94,7 +95,6 @@ str(mtcars)
 cor(mtcars$disp , mtcars$hp)
 my_cor  <- cor(mtcars)
 corrplot(my_cor)
-
 
 lm.with.mc <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + Medicare + Disabilities, data = elect.df.smaller.train)
 summary(lm.with.mc)
@@ -125,18 +125,16 @@ accuracy(rt.pred, yvalid)
 accuracy(rt.tuned.pred, yvalid)
 accuracy(as.vector(lm.regularized.pred), yvalid)
 
-# bm.all.fit <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity, data = elect.df.train)
-
-bm.all.fit <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity+ IncomeAbove75K+ SocialSecurity+ UnemployRate+ Asian+ AmericanIndian,   data = elect.df.train)
+bm.all.fit <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities + AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian, data = elect.df.train)
 
 
 bm.all.fit.pred <- predict(bm.all.fit, elect.df.test)
 
-all4  <- cbind(bm.all.fit.pred, lm.step.pred, rt.pred, lm.regularized.pred)
+# all4  <- cbind(bm.all.fit.pred, lm.step.pred, rt.pred, lm.regularized.pred)
 
-write.csv(bm.all.fit.pred, "/Users/mirza/Box Sync/UVA//Obama/Obama.csv")
-write.csv(bm.all.fit.pred, "/Users/mirza/Box Sync/UVA//Obama/Obama.csv")
-write.csv(bm.all.fit.pred, "/Users/mirza/Box Sync/UVA//Obama/Obama.csv")
-write.csv(bm.all.fit.pred, lm.step.pred, rt.pred, lm.regularized.pred "/Users/mirza/Box Sync/UVA//Obama/all4.csv")
+write.csv(bm.all.fit.pred, "/Users/mirza/Box Sync/UVA//Obama/Out.csv")
+write.csv(lm.step.pred, "/Users/mirza/Box Sync/UVA//Obama/Out.csv")
+write.csv(rt.tuned.pred, "/Users/mirza/Box Sync/UVA//Obama/Out.csv")
+write.csv(bm.all.fit.pred, lm.step.pred, rt.pred, lm.regularized.pred "/Users/mirza/Box Sync/UVA/Obama/all4.csv")
 
-write.csv(cor_matrix, "/Users/mirza/Box Sync/UVA/Obama/CoMatrix.csv")
+# write.csv(cor_matrix, "/Users/mirza/Box Sync/UVA/Obama/CoMatrix.csv")
