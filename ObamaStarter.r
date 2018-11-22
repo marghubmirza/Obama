@@ -1,16 +1,14 @@
 
-#install.packages(pkgs = "rpart", repos = "http://cran.us.r-project.org")  # Run only once on your machine.
-#install.packages(pkgs = "rpart.plot", repos = "http://cran.us.r-project.org")  # Run only once on your machine.
-#install.packages(pkgs = "glmnet", repos = "http://cran.us.r-project.org")  # Run only once on your machine.
-#install.packages("corrplot")
+install.packages(pkgs = "rpart", repos = "http://cran.us.r-project.org")  # Run only once on your machine.
+install.packages(pkgs = "rpart.plot", repos = "http://cran.us.r-project.org")  # Run only once on your machine.
+install.packages(pkgs = "glmnet", repos = "http://cran.us.r-project.org")  # Run only once on your machine.
 
 library(rpart)
 library(rpart.plot)
 library(glmnet)
 library(forecast)
-library(corrplot)
 
-elect.df <- read.csv("/Users/mirza/Box Sync/UVA/Obama/Obama.csv")
+elect.df <- read.csv("Obama.csv")
 dim(elect.df)  # How many rows and columns are there?
 head(elect.df)
 tail(elect.df)
@@ -24,8 +22,6 @@ ImputeData <- function(vec, mn) {
 }
 
 (data.mean <- sapply(elect.df[ , 10:41], mean, na.rm = TRUE))
-(my.mean <- as.data.frame (sapply(elect.df[ , 10:41], mean, na.rm = TRUE)))
-
 
 for(i in 10:41) {
   elect.df[, i] <- ImputeData(elect.df[ , i], data.mean[i - 9])
@@ -54,9 +50,8 @@ rowIndicesSmallerTrain <- sample(1:nTrain, size = nSmallTrain, replace = FALSE)
 elect.df.smaller.train <- elect.df.train[rowIndicesSmallerTrain, ]
 elect.df.validation <- elect.df.train[-rowIndicesSmallerTrain, ]
 
-lm <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities + AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian,  data = elect.df.smaller.train)
+lm <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + SpeakingNonEnglish + LandArea, data = elect.df.smaller.train)
 summary(lm)
-
 
 lm.step <- step(lm, direction = "backward")
 summary(lm.step)  # Which variables did it drop?
@@ -67,10 +62,10 @@ lm.step.pred <- predict(lm.step, elect.df.validation)
 accuracy(lm.pred, elect.df.validation$Obama_margin_percent)
 accuracy(lm.step.pred, elect.df.validation$Obama_margin_percent)
 
-rt <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities +  AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian, data = elect.df.smaller.train)  # Fits a regression tree.
+rt <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + SpeakingNonEnglish + LandArea, data = elect.df.smaller.train)  # Fits a regression tree.
 prp(rt, type = 1, extra = 1)  # Use prp from the rpart.plot package to plot the tree.
 
-rt.tuned <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities +   AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian, data = elect.df.smaller.train, control = rpart.control(cp = 0.005))
+rt.tuned <- rpart(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + SpeakingNonEnglish + LandArea, data = elect.df.smaller.train, control = rpart.control(cp = 0.0001))
 prp(rt.tuned, type = 1, extra = 1)
 
 rt.pred <- predict(rt, elect.df.validation)
@@ -81,20 +76,8 @@ accuracy(lm.step.pred, elect.df.validation$Obama_margin_percent)
 accuracy(rt.pred, elect.df.validation$Obama_margin_percent)
 accuracy(rt.tuned.pred, elect.df.validation$Obama_margin_percent)
 
-
-# MIRZA Alam Mirza
-
 cor(elect.df.smaller.train$Medicare,elect.df.smaller.train$Disabilities)
-#cor_matrix <- as.data.frame(cor(elect.df.smaller.train[,10:41])) # To find all pairwise correlations.
-cor_matrix <- cor(elect.df.smaller.train[,10:44]) # To find all pairwise correlations.
-
-corrplot(cor_matrix)
-
-data("mtcars")
-str(mtcars)
-cor(mtcars$disp , mtcars$hp)
-my_cor  <- cor(mtcars)
-corrplot(my_cor)
+cor_matrix <- as.data.frame(cor(elect.df.smaller.train[,10:41])) # To find all pairwise correlations.
 
 lm.with.mc <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity + Medicare + Disabilities, data = elect.df.smaller.train)
 summary(lm.with.mc)
@@ -125,16 +108,12 @@ accuracy(rt.pred, yvalid)
 accuracy(rt.tuned.pred, yvalid)
 accuracy(as.vector(lm.regularized.pred), yvalid)
 
-bm.all.fit <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty  + Disabilities + AgeBelow35 + SpeakingNonEnglish + Asian  + Hawaiian, data = elect.df.train)
-
+bm.all.fit <- lm(Obama_margin_percent ~ Region + Black + HighSchool + Poverty + PopDensity, data = elect.df.train)
 
 bm.all.fit.pred <- predict(bm.all.fit, elect.df.test)
 
-# all4  <- cbind(bm.all.fit.pred, lm.step.pred, rt.pred, lm.regularized.pred)
+write.csv(bm.all.fit.pred, "ObamaSubmissionTeamX.csv")
 
-write.csv(bm.all.fit.pred, "/Users/mirza/Box Sync/UVA//Obama/Out.csv")
-write.csv(lm.step.pred, "/Users/mirza/Box Sync/UVA//Obama/Out.csv")
-write.csv(rt.tuned.pred, "/Users/mirza/Box Sync/UVA//Obama/Out.csv")
-write.csv(bm.all.fit.pred, lm.step.pred, rt.pred, lm.regularized.pred "/Users/mirza/Box Sync/UVA/Obama/all4.csv")
 
-# write.csv(cor_matrix, "/Users/mirza/Box Sync/UVA/Obama/CoMatrix.csv")
+
+
